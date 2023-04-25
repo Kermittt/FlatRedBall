@@ -1,11 +1,14 @@
 ﻿using FlatRedBall.Glue.FormHelpers;
 using FlatRedBall.Glue.Plugins;
+using FlatRedBall.Glue.Plugins.ExportedImplementations;
 using FlatRedBall.Glue.SaveClasses;
 using FlatRedBall.Glue.VSHelpers;
 using System;
 using System.ComponentModel.Composition;
 using System.Reflection;
+using WfcPlugin.CodeGenerators;
 using WfcPlugin.Controls;
+using WfcPlugin.Extensions;
 using WfcPlugin.ViewModels;
 
 namespace WfcPlugin
@@ -18,11 +21,13 @@ namespace WfcPlugin
         private WfcEditorViewModel _viewModel;
         private PluginTab _tab;
 
-        public override string FriendlyName => "WFC Plugin";
+        public override string FriendlyName => "Wave Function Collapse Map Plugin";
         public override Version Version => new(1, 0);
 
         public override void StartUp()
         {
+            RegisterCodeGenerator(new WfcEditorCodeGenerator());
+
             _codeBuildItemAdder = new CodeBuildItemAdder();
             _codeBuildItemAdder.Add("WfcPlugin.Wfc.WfcMap.cs");
             _codeBuildItemAdder.OutputFolderInProject = "Wfc";
@@ -39,11 +44,13 @@ namespace WfcPlugin
 
         private void HandleItemSelected(ITreeNode selectedTreeNode)
         {
-            if (selectedTreeNode.Tag is NamedObjectSave namedObjectSave
-                && namedObjectSave.InstanceType == "FlatRedBall.TileGraphics.LayeredTileMap")
+            if (selectedTreeNode.TryGetLayeredTileMap(out var map))
             {
-                EnsureTabCreated(namedObjectSave);
+                EnsureTabCreated(map);
                 _viewModel.UpdateFromGlueObject();
+
+                // TODO : Only do this if not already generated or properties have changed?
+                GlueCommands.Self.GenerateCodeCommands.GenerateCurrentElementCode();
             }
             else
             {
@@ -51,16 +58,16 @@ namespace WfcPlugin
             }
         }
 
-        private void EnsureTabCreated(NamedObjectSave namedObjectSave)
+        private void EnsureTabCreated(NamedObjectSave map)
         {
             if (_tab != null)
             {
-                _viewModel.GlueObject = namedObjectSave;
+                _viewModel.GlueObject = map;
                 _tab.Show();
                 return;
             }
 
-            _viewModel = new WfcEditorViewModel() { GlueObject = namedObjectSave };
+            _viewModel = new WfcEditorViewModel() { GlueObject = map };
             _control = new WfcEditorControl() { DataContext = _viewModel };
             _tab = CreateAndAddTab(_control, "WFC");
         }

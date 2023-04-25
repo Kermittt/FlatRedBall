@@ -2,6 +2,7 @@
 
 namespace WfcPlugin.ViewModels
 {
+    // TODO : Properties are being set on base and derived, but property values are not being inherited
     public class WfcEditorViewModel : PropertyListContainerViewModel
     {
         [SyncedProperty]
