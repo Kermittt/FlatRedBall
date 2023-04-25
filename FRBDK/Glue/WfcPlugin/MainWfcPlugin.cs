@@ -1,8 +1,10 @@
 ﻿using FlatRedBall.Glue.FormHelpers;
 using FlatRedBall.Glue.Plugins;
 using FlatRedBall.Glue.SaveClasses;
+using FlatRedBall.Glue.VSHelpers;
 using System;
 using System.ComponentModel.Composition;
+using System.Reflection;
 using WfcPlugin.Controls;
 using WfcPlugin.ViewModels;
 
@@ -11,6 +13,7 @@ namespace WfcPlugin
     [Export(typeof(PluginBase))]
     public class MainWfcPlugin : PluginBase
     {
+        private CodeBuildItemAdder _codeBuildItemAdder;
         private WfcEditorControl _control;
         private WfcEditorViewModel _viewModel;
         private PluginTab _tab;
@@ -20,7 +23,18 @@ namespace WfcPlugin
 
         public override void StartUp()
         {
+            _codeBuildItemAdder = new CodeBuildItemAdder();
+            _codeBuildItemAdder.Add("WfcPlugin.Wfc.WfcMap.cs");
+            _codeBuildItemAdder.OutputFolderInProject = "Wfc";
+
+            ReactToLoadedGlux += HandleGluxLoaded;
             ReactToItemSelectHandler += HandleItemSelected;
+        }
+
+        private void HandleGluxLoaded()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            _codeBuildItemAdder.PerformAddAndSaveTask(assembly);
         }
 
         private void HandleItemSelected(ITreeNode selectedTreeNode)
