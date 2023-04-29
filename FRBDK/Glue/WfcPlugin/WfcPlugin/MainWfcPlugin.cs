@@ -34,15 +34,14 @@ namespace WfcPlugin
                 AddAsGenerated = true,
                 OutputFolderInProject = "Wfc"
             };
-            _codeBuildItemAdder.Add("WfcPlugin.Wfc.WfcMap.cs");
+            _codeBuildItemAdder.AddFolder("WfcCore/Wfc", Assembly.GetAssembly(typeof(WfcCore.Wfc.WfcMap)));
 
             RegisterCodeGenerator(new WfcEditorCodeGenerator());
         }
 
         private void HandleGluxLoaded()
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            _codeBuildItemAdder.PerformAddAndSaveTask(assembly);
+            _codeBuildItemAdder.PerformAddAndSaveTask(Assembly.GetAssembly(typeof(WfcCore.Wfc.WfcMap)));
         }
 
         private void HandleItemSelected(ITreeNode selectedTreeNode)

@@ -193,7 +193,7 @@ namespace TMXGlueLib
                             {
 
                                 // November 11, 2017 - why is this "+1"?
-                                // That's confusing. Is it because in the old days 
+                                // That's confusing. Is it because in the old days
                                 // it was hardcoded to be the ID of the tile including the offset?
                                 // for multiple tilesets the offset won't be 1...
                                 //uint key = (uint)t.id + 1;
@@ -324,7 +324,7 @@ namespace TMXGlueLib
                         fileAttemptedToLoad = FileManager.RemoveDotDotSlash( FileManager.RelativeDirectory + _sourceField);
                     }
 
-                    string message = "Could not find the shared tsx file \n" + fileAttemptedToLoad + 
+                    string message = "Could not find the shared tsx file \n" + fileAttemptedToLoad +
                         "\nIf this is a relative file name, then the loader will use " +
                         "the FileManager's RelativeDirectory to make the file absolute.  Therefore, be sure to set the FileManger's RelativeDirectory to the file represented by " +
                         "this fileset before setting this property if setting this property manually.";

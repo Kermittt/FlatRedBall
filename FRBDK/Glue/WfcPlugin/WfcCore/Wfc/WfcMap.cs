@@ -1,4 +1,4 @@
-﻿namespace WfcPlugin.Wfc
+﻿namespace WfcCore.Wfc
 {
     public class WfcMap
     {

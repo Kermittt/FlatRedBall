@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="WfcMap.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Wfc\WfcMap.cs" />
+  </ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="IF NOT EXIST &quot;$(SolutionDir)Glue\bin\Debug\Plugins\WfcPlugin\&quot; md &quot;$(SolutionDir)Glue\bin\Debug\Plugins\WfcPlugin\&quot;&#xD;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)Glue\bin\Debug\Plugins\WfcPlugin\$(TargetFileName)&quot;" />
+	</Target>
+
+</Project>

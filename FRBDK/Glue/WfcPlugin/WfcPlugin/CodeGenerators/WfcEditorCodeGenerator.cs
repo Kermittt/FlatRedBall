@@ -16,14 +16,9 @@ namespace WfcPlugin.CodeGenerators
                 return codeBlock;
             }
 
-            // TODO : Code is being generated in GameScreen, and duplicated in Overworld screen
-            // Need to check NamedObjectSave properties to determine if it is derived?
-
-            // TODO : Need to add "using WfcPlugin.Wfc"
-
-            foreach (var map in maps)
+            foreach (var map in maps.Where(m => !m.DefinedByBase))
             {
-                codeBlock.Line($"public WfcMap {map.FieldName}_WfcMap {{ get; set; }}");
+                codeBlock.Line($"public WfcCore.Wfc.WfcMap {map.FieldName}_WfcMap {{ get; set; }}");
             }
 
             return codeBlock;
