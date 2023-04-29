@@ -21,9 +21,6 @@ namespace WfcPlugin.CodeGenerators
 
             // TODO : Need to add "using WfcPlugin.Wfc"
 
-            // TODO : File Wfc.cs should be named Wfc.Generated.cs?
-            // Should I actually be generating this and changing namespace?
-
             foreach (var map in maps)
             {
                 codeBlock.Line($"public WfcMap {map.FieldName}_WfcMap {{ get; set; }}");

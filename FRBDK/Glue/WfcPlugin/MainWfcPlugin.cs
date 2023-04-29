@@ -26,14 +26,17 @@ namespace WfcPlugin
 
         public override void StartUp()
         {
-            RegisterCodeGenerator(new WfcEditorCodeGenerator());
-
-            _codeBuildItemAdder = new CodeBuildItemAdder();
-            _codeBuildItemAdder.Add("WfcPlugin.Wfc.WfcMap.cs");
-            _codeBuildItemAdder.OutputFolderInProject = "Wfc";
-
             ReactToLoadedGlux += HandleGluxLoaded;
             ReactToItemSelectHandler += HandleItemSelected;
+
+            _codeBuildItemAdder = new CodeBuildItemAdder()
+            {
+                AddAsGenerated = true,
+                OutputFolderInProject = "Wfc"
+            };
+            _codeBuildItemAdder.Add("WfcPlugin.Wfc.WfcMap.cs");
+
+            RegisterCodeGenerator(new WfcEditorCodeGenerator());
         }
 
         private void HandleGluxLoaded()
@@ -49,7 +52,8 @@ namespace WfcPlugin
                 EnsureTabCreated(map);
                 _viewModel.UpdateFromGlueObject();
 
-                // TODO : Only do this if not already generated or properties have changed?
+                // TODO : Only do this if something has changed? (e.g. properties)
+                // TODO : How do we ensure it is executed on existing objects without having to select them in the tree?
                 GlueCommands.Self.GenerateCodeCommands.GenerateCurrentElementCode();
             }
             else
