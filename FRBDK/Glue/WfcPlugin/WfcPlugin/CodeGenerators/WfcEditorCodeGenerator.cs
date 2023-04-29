@@ -24,7 +24,7 @@ namespace WfcPlugin.CodeGenerators
         {
             foreach (var map in GetMaps(element).Where(m => !m.SetByDerived))
             {
-                codeBlock.Line($"{map.FieldName}_WfcMap = new WfcCore.Wfc.WfcMap();");
+                codeBlock.Line($"{map.FieldName}_WfcMap = new WfcCore.Wfc.WfcMap({map.FieldName});");
             }
 
             return codeBlock;
