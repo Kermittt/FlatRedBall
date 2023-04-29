@@ -46,7 +46,7 @@ namespace WfcPlugin
 
         private void HandleItemSelected(ITreeNode selectedTreeNode)
         {
-            if (selectedTreeNode.TryGetLayeredTileMap(out var map))
+            if (selectedTreeNode != null && selectedTreeNode.TryGetLayeredTileMap(out var map))
             {
                 EnsureTabCreated(map);
                 _viewModel.UpdateFromGlueObject();

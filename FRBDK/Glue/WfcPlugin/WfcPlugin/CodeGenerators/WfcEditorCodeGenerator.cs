@@ -22,9 +22,21 @@ namespace WfcPlugin.CodeGenerators
 
         public override ICodeBlock GenerateInitializeLate(ICodeBlock codeBlock, IElement element)
         {
+            // TODO : Initialize Speed and Seed here?
             foreach (var map in GetMaps(element).Where(m => !m.SetByDerived))
             {
                 codeBlock.Line($"{map.FieldName}_WfcMap = new WfcCore.Wfc.WfcMap({map.FieldName});");
+            }
+
+            return codeBlock;
+        }
+
+        public override ICodeBlock GenerateActivity(ICodeBlock codeBlock, IElement element)
+        {
+            foreach (var map in GetMaps(element).Where(m => !m.SetByDerived))
+            {
+                codeBlock.Line($"{map.FieldName}_WfcMap.ScrollMap();");
+                codeBlock.Line($"{map.FieldName}_WfcMap.PlayerInput();");
             }
 
             return codeBlock;

@@ -5,11 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="WfcMap.cs" />
+    <EmbeddedResource Include="Wfc\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Wfc\WfcMap.cs" />
+    <ProjectReference Include="..\..\..\..\Engines\FlatRedBallXNA\Standard\FlatRedBallStandard\FlatRedBallStandard\FlatRedBallStandard.csproj" />
+    <ProjectReference Include="..\..\..\..\Tiled\TMXGlueLib\TMXGlueLibCore.csproj" />
   </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">

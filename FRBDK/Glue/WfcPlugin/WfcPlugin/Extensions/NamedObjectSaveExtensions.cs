@@ -7,7 +7,7 @@ namespace WfcPlugin.Extensions
     {
         public static bool TryGetLayeredTileMap(this NamedObjectSave namedObjectSave, out NamedObjectSave map)
         {
-            if (namedObjectSave.SourceClassType == "FlatRedBall.TileGraphics.LayeredTileMap")
+            if (namedObjectSave?.SourceClassType == "FlatRedBall.TileGraphics.LayeredTileMap")
             {
                 map = namedObjectSave;
                 return true;
@@ -19,7 +19,7 @@ namespace WfcPlugin.Extensions
 
         public static bool TryGetLayeredTileMap(this ITreeNode treeNode, out NamedObjectSave map)
         {
-            if (treeNode.Tag is NamedObjectSave namedObjectSave)
+            if (treeNode?.Tag is NamedObjectSave namedObjectSave)
             {
                 return TryGetLayeredTileMap(namedObjectSave, out map);
             }
