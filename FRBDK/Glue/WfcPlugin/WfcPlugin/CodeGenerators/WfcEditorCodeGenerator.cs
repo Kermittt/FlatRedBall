@@ -1,6 +1,7 @@
 ﻿using FlatRedBall.Glue.CodeGeneration;
 using FlatRedBall.Glue.CodeGeneration.CodeBuilder;
 using FlatRedBall.Glue.SaveClasses;
+using System.Collections.Generic;
 using System.Linq;
 using WfcPlugin.Extensions;
 
@@ -10,18 +11,30 @@ namespace WfcPlugin.CodeGenerators
     {
         public override ICodeBlock GenerateFields(ICodeBlock codeBlock, IElement element)
         {
-            var maps = element.NamedObjects.Where(n => n.TryGetLayeredTileMap(out var _)).ToList();
-            if (maps.Count == 0)
+            foreach (var map in GetMaps(element).Where(m => !m.DefinedByBase))
             {
-                return codeBlock;
-            }
-
-            foreach (var map in maps.Where(m => !m.DefinedByBase))
-            {
-                codeBlock.Line($"public WfcCore.Wfc.WfcMap {map.FieldName}_WfcMap {{ get; set; }}");
+                var access = map.SetByDerived ? "protected" : "private";
+                codeBlock.Line($"{access} WfcCore.Wfc.WfcMap {map.FieldName}_WfcMap;");
             }
 
             return codeBlock;
+        }
+
+        public override ICodeBlock GenerateInitializeLate(ICodeBlock codeBlock, IElement element)
+        {
+            foreach (var map in GetMaps(element).Where(m => !m.SetByDerived))
+            {
+                codeBlock.Line($"{map.FieldName}_WfcMap = new WfcCore.Wfc.WfcMap();");
+            }
+
+            return codeBlock;
+        }
+
+        private static List<NamedObjectSave> GetMaps(IElement element)
+        {
+            return element.NamedObjects
+                .Where(n => n.TryGetLayeredTileMap(out var _))
+                .ToList();
         }
     }
 }
