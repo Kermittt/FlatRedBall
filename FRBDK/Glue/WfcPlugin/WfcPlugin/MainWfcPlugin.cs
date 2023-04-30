@@ -4,8 +4,10 @@ using FlatRedBall.Glue.Plugins.ExportedImplementations;
 using FlatRedBall.Glue.SaveClasses;
 using FlatRedBall.Glue.VSHelpers;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Reflection;
+using WfcCore.Wfc;
 using WfcPlugin.CodeGenerators;
 using WfcPlugin.Controls;
 using WfcPlugin.Extensions;
@@ -34,14 +36,14 @@ namespace WfcPlugin
                 AddAsGenerated = true,
                 OutputFolderInProject = "Wfc"
             };
-            _codeBuildItemAdder.AddFolder("WfcCore/Wfc", Assembly.GetAssembly(typeof(WfcCore.Wfc.WfcMap)));
+            _codeBuildItemAdder.AddFolder("WfcCore/Wfc", Assembly.GetAssembly(typeof(WfcMap)));
 
             RegisterCodeGenerator(new WfcEditorCodeGenerator());
         }
 
         private void HandleGluxLoaded()
         {
-            _codeBuildItemAdder.PerformAddAndSaveTask(Assembly.GetAssembly(typeof(WfcCore.Wfc.WfcMap)));
+            _codeBuildItemAdder.PerformAddAndSaveTask(Assembly.GetAssembly(typeof(WfcMap)));
         }
 
         private void HandleItemSelected(ITreeNode selectedTreeNode)
@@ -73,6 +75,52 @@ namespace WfcPlugin
             _viewModel = new WfcEditorViewModel() { GlueObject = map };
             _control = new WfcEditorControl() { DataContext = _viewModel };
             _tab = CreateAndAddTab(_control, "WFC");
+        }
+
+        // TODO : Why doesn't NamedObjectSave have CustomVariables to add to?
+
+        //private bool AddVariables(NamedObjectSave map, Dictionary<string, Func<CustomVariable>> variables)
+        //{
+
+        //}
+
+        //private bool AddVariable(NamedObjectSave map, string name, Func<CustomVariable> variable)
+        //{
+        //    //map.TypedMembers
+        //    if (map.HasCustomVariable(name))
+        //    {
+        //        return false;
+        //    }
+        //}
+
+        private readonly Dictionary<string, Func<CustomVariable>> IWcfMapVariables = new()
+        {
+            { nameof(IWfcMap.Speed), SpeedVariable },
+            { nameof(IWfcMap.Seed), SeedVariable }
+        };
+
+        private static CustomVariable SpeedVariable()
+        {
+            return new CustomVariable()
+            {
+                Name = nameof(IWfcMap.Speed),
+                DefaultValue = 64d,
+                Type = "double",
+                SetByDerived = true,
+                Category = "WFC"
+            };
+        }
+
+        private static CustomVariable SeedVariable()
+        {
+            return new CustomVariable()
+            {
+                Name = nameof(IWfcMap.Seed),
+                DefaultValue = null,
+                Type = "int?",
+                SetByDerived = true,
+                Category = "WFC"
+            };
         }
     }
 }
