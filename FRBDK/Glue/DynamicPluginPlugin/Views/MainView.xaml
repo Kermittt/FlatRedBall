@@ -8,8 +8,74 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance {x:Type viewModels:MainViewModel}, IsDesignTimeCreatable=True}"
              d:DesignHeight="450"
-             d:DesignWidth="800">
-    <Grid>
+             d:DesignWidth="300">
 
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center">
+            <Button Content="Add"
+                    Width="75"
+                    Command="{Binding AddCommand}" />
+            <Button Content="Remove"
+                    Width="75"
+                    Margin="5,0,0,0"
+                    Command="{Binding RemoveCommand}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1"
+              Margin="0,5,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Row="0"
+                   Grid.Column="0"
+                   Content="Name" />
+            <TextBox Grid.Row="0"
+                     Grid.Column="1"
+                     Text="{Binding SelectedPlugin.Name, Mode=OneWay}"
+                     IsReadOnly="True" />
+
+            <Label Grid.Row="1"
+                   Grid.Column="0"
+                   Content="Version" />
+            <TextBox Grid.Row="1"
+                     Grid.Column="1"
+                     Text="{Binding SelectedPlugin.Version, Mode=OneWay}"
+                     IsReadOnly="True" />
+
+            <Label Grid.Row="2"
+                   Grid.Column="0"
+                   Content="Path" />
+            <TextBox Grid.Row="2"
+                     Grid.Column="1"
+                     Text="{Binding SelectedPlugin.FullPath, Mode=OneWay}"
+                     IsReadOnly="True" />
+        </Grid>
+
+        <ListBox Grid.Row="2"
+                 Margin="0,5,0,0"
+                 ItemsSource="{Binding Plugins, Mode=OneTime}"
+                 SelectedItem="{Binding SelectedPlugin, Mode=TwoWay}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                              Content="{Binding Name, Mode=OneWay}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </UserControl>
