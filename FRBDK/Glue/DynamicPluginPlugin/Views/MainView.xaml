@@ -35,6 +35,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100" />
@@ -62,7 +63,15 @@
                    Content="Path" />
             <TextBox Grid.Row="2"
                      Grid.Column="1"
-                     Text="{Binding SelectedPlugin.FullPath, Mode=OneWay}"
+                     Text="{Binding SelectedPlugin.Path, Mode=OneWay}"
+                     IsReadOnly="True" />
+
+            <Label Grid.Row="3"
+                   Grid.Column="0"
+                   Content="Type" />
+            <TextBox Grid.Row="2"
+                     Grid.Column="1"
+                     Text="{Binding SelectedPlugin.Type, Mode=OneWay}"
                      IsReadOnly="True" />
         </Grid>
 
@@ -72,8 +81,18 @@
                  SelectedItem="{Binding SelectedPlugin, Mode=TwoWay}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                              Content="{Binding Name, Mode=OneWay}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0"
+                                  IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Name, Mode=OneWay}"
+                                   Margin="5,0,0,0" />
+                    </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
