@@ -2,6 +2,9 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 
 namespace DynamicPluginPlugin.ViewModels
@@ -50,14 +53,23 @@ namespace DynamicPluginPlugin.ViewModels
             try
             {
                 var plugins = _main.AddPluginAssembly(ofd.FileName);
-                foreach (var plugin in plugins)
+                if (plugins.Any())
                 {
-                    Plugins.Add(new PluginViewModel(plugin));
+                    foreach (var plugin in plugins)
+                    {
+                        var viewModel = new PluginViewModel(plugin);
+                        viewModel.PropertyChanged += Plugin_PropertyChanged;
+                        Plugins.Add(viewModel);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("No plugins found in assembly.", "Dynamic Plugins");
                 }
             }
             catch (Exception ex)
             {
-                throw;
+                MessageBox.Show($"Error loading plugin assembly.\n\n{ex.Message}", "Dynamic Plugins");
             }
         }
 
@@ -69,6 +81,29 @@ namespace DynamicPluginPlugin.ViewModels
         private bool RemoveCanExecute()
         {
             return SelectedPlugin != null;
+        }
+
+        private void Plugin_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PluginViewModel.IsEnabled))
+            {
+                try
+                {
+                    var viewModel = (PluginViewModel)sender;
+                    if (viewModel.IsEnabled)
+                    {
+                        _main.EnablePlugin(viewModel.Type);
+                    }
+                    else
+                    {
+                        _main.DisablePlugin(viewModel.Type);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error updating plugin.\n\n{ex.Message}", "Dynamic Plugins");
+                }
+            }
         }
     }
 }

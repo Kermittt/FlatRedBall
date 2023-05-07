@@ -12,9 +12,10 @@ namespace DynamicPluginPlugin.ViewModels
         public PluginViewModel(Plugin model)
         {
             Name = model.Name;
-            Path = model.Path;
-            IsEnabled = model.IsEnabled;
             Version = model.Version;
+            Path = model.Path;
+            Type = model.Type;
+            IsEnabled = model.Instance != null;
         }
 
         public string Name
