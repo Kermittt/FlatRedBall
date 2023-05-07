@@ -10,7 +10,6 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Loader;
 
 namespace DynamicPluginPlugin
 {
@@ -20,7 +19,7 @@ namespace DynamicPluginPlugin
         private readonly Dictionary<Guid, PluginAssembly> _pluginAssemblies = new();
         private readonly Dictionary<Guid, Plugin> _plugins = new();
 
-        private DirectoryInfo _cacheDirectory;
+        private string _cacheDirectory;
         private PluginTab _tab;
         private MainViewModel _viewModel;
 
@@ -33,10 +32,10 @@ namespace DynamicPluginPlugin
 
         public override void StartUp()
         {
-            _cacheDirectory = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "PluginCache"));
-            if (!_cacheDirectory.Exists)
+            _cacheDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "PluginCache");
+            if (!Directory.Exists(_cacheDirectory))
             {
-                _cacheDirectory.Create();
+                Directory.CreateDirectory(_cacheDirectory);
             }
 
             EnsureTabCreated();
@@ -59,17 +58,16 @@ namespace DynamicPluginPlugin
         {
             // TODO : Need to make sure plugin is not already loaded by the main plugin system
 
-            if (_pluginAssemblies.Values.Any(a => a.Path == path))
+            if (_pluginAssemblies.Values.Any(a => a.SourcePath == path))
             {
                 throw new Exception("Plugin assembly already loaded");
             }
 
-            // Instantiate and create all plugins in the assembly
-            var pluginAssembly = new PluginAssembly()
-            {
-                Path = path
-            };
+            // Copy the assembly to the cache and load it
+            var pluginAssembly = new PluginAssembly(path, _cacheDirectory);
             pluginAssembly.Load();
+
+            // Instantiate and create all plugins in the assembly
             var plugins = pluginAssembly.LoadContext.Assemblies
                 .SelectMany(a => a.ExportedTypes)
                 .Where(t => t.IsPublic && !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(IPlugin)))
@@ -110,7 +108,8 @@ namespace DynamicPluginPlugin
         public void RemovePluginAssembly(Guid id)
         {
             // Disable and remove all plugins in the assembly
-            foreach (var plugin in _pluginAssemblies[id].Plugins)
+            var pluginAssembly = _pluginAssemblies[id];
+            foreach (var plugin in pluginAssembly.Plugins)
             {
                 if (plugin.IsEnabled)
                 {
@@ -120,6 +119,7 @@ namespace DynamicPluginPlugin
             }
 
             // Remove the assembly
+            pluginAssembly.Remove();
             _pluginAssemblies.Remove(id);
         }
 
@@ -140,12 +140,9 @@ namespace DynamicPluginPlugin
                 throw new Exception($"Plugin is already enabled for id {plugin.Id}");
             }
 
-            // If all plugins in the assembly are disabled, load the assembly
+            // Make sure the assembly is loaded
             var pluginAssembly = _pluginAssemblies[plugin.AssemblyId];
-            if (!pluginAssembly.IsLoaded)
-            {
-                pluginAssembly.Load();
-            }
+            pluginAssembly.Load();
 
             // Instantiate the plugin
             var type = Type.GetType(plugin.Type, (assemblyName) => pluginAssembly.LoadContext.LoadFromAssemblyName(assemblyName), null, true);

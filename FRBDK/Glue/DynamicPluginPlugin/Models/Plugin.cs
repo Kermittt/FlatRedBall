@@ -17,12 +17,22 @@ namespace DynamicPluginPlugin.Models
 
         public void Start(IPlugin instance)
         {
+            if (IsEnabled)
+            {
+                return;
+            }
+
             Instance = instance;
             Instance.StartUp();
         }
 
         public void Stop()
         {
+            if (!IsEnabled)
+            {
+                return;
+            }
+
             Instance.ShutDown(PluginShutDownReason.UserDisabled);
             Instance = null;
         }
