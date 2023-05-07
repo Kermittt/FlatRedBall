@@ -7,9 +7,7 @@ using FlatRedBall.Glue.Plugins.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 
 namespace DynamicPluginPlugin
 {
@@ -19,7 +17,6 @@ namespace DynamicPluginPlugin
         private readonly Dictionary<Guid, PluginAssembly> _pluginAssemblies = new();
         private readonly Dictionary<Guid, Plugin> _plugins = new();
 
-        private string _cacheDirectory;
         private PluginTab _tab;
         private MainViewModel _viewModel;
 
@@ -32,12 +29,6 @@ namespace DynamicPluginPlugin
 
         public override void StartUp()
         {
-            _cacheDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "PluginCache");
-            if (!Directory.Exists(_cacheDirectory))
-            {
-                Directory.CreateDirectory(_cacheDirectory);
-            }
-
             EnsureTabCreated();
             _tab.Show();
         }
@@ -64,7 +55,7 @@ namespace DynamicPluginPlugin
             }
 
             // Copy the assembly to the cache and load it
-            var pluginAssembly = new PluginAssembly(path, _cacheDirectory);
+            var pluginAssembly = new PluginAssembly(path);
             pluginAssembly.Load();
 
             // Instantiate and create all plugins in the assembly
@@ -119,7 +110,6 @@ namespace DynamicPluginPlugin
             }
 
             // Remove the assembly
-            pluginAssembly.Remove();
             _pluginAssemblies.Remove(id);
         }
 
