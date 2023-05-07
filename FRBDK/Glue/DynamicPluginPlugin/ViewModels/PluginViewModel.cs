@@ -13,6 +13,7 @@ namespace DynamicPluginPlugin.ViewModels
         public PluginViewModel(Plugin model)
         {
             Id = model.Id;
+            AssemblyId = model.AssemblyId;
             Name = model.Name;
             Version = model.Version;
             Path = model.Path;
@@ -21,6 +22,12 @@ namespace DynamicPluginPlugin.ViewModels
         }
 
         public Guid Id
+        {
+            get => Get<Guid>();
+            init => Set(value);
+        }
+
+        public Guid AssemblyId
         {
             get => Get<Guid>();
             init => Set(value);

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Loader;
 
 namespace DynamicPluginPlugin
@@ -16,16 +17,28 @@ namespace DynamicPluginPlugin
     [Export(typeof(PluginBase))]
     public class MainDynamicPluginPlugin : PluginBase
     {
-        private readonly Dictionary<string, AssemblyLoadContext> _contexts = new();
+        private readonly Dictionary<Guid, PluginAssembly> _pluginAssemblies = new();
         private readonly Dictionary<Guid, Plugin> _plugins = new();
 
+        private DirectoryInfo _cacheDirectory;
         private PluginTab _tab;
         private MainViewModel _viewModel;
 
         public override string FriendlyName => "Dynamic Plugin Plugin";
 
+        /// <summary>
+        /// Set to <c>true</c> to force garbage collection whenever an assembly is unloaded.
+        /// </summary>
+        public bool ForceGC { get; set; } = true;
+
         public override void StartUp()
         {
+            _cacheDirectory = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "PluginCache"));
+            if (!_cacheDirectory.Exists)
+            {
+                _cacheDirectory.Create();
+            }
+
             EnsureTabCreated();
             _tab.Show();
         }
@@ -42,18 +55,22 @@ namespace DynamicPluginPlugin
             _tab = CreateAndAddTab(view, "Dynamic Plugins", TabLocation.Left);
         }
 
-        public IEnumerable<Plugin> AddPluginAssembly(string path)
+        public PluginAssembly AddPluginAssembly(string path)
         {
             // TODO : Need to make sure plugin is not already loaded by the main plugin system
 
-            if (_contexts.ContainsKey(path))
+            if (_pluginAssemblies.Values.Any(a => a.Path == path))
             {
                 throw new Exception("Plugin assembly already loaded");
             }
 
             // Instantiate and create all plugins in the assembly
-            var context = LoadPluginAssembly(path);
-            var plugins = context.Assemblies
+            var pluginAssembly = new PluginAssembly()
+            {
+                Path = path
+            };
+            pluginAssembly.Load();
+            var plugins = pluginAssembly.LoadContext.Assemblies
                 .SelectMany(a => a.ExportedTypes)
                 .Where(t => t.IsPublic && !t.IsAbstract && !t.IsInterface && t.IsAssignableTo(typeof(IPlugin)))
                 .Select(t =>
@@ -62,35 +79,38 @@ namespace DynamicPluginPlugin
                     var plugin = new Plugin()
                     {
                         Id = t.GUID,
+                        AssemblyId = pluginAssembly.Id,
                         Name = instance.FriendlyName,
                         Version = instance.Version.ToString(),
                         Path = path,
-                        Type = t.UnversionedName(),
-                        Instance = instance
+                        Type = t.UnversionedName()
                     };
+
+                    pluginAssembly.Plugins.Add(plugin);
                     _plugins.Add(plugin.Id, plugin);
-                    StartPlugin(plugin);
+
+                    plugin.Start(instance);
                     return plugin;
                 })
                 .ToArray();
 
-            // Add the assembly, or unload it immediately if it didn't contain any plugins
-            if (plugins.Length > 0)
+            // Unload the assembly immediately if it didn't contain any plugins
+            if (plugins.Length == 0)
             {
-                _contexts.Add(path, context);
-            }
-            else
-            {
-                context.Unload();
+                pluginAssembly.Unload();
+                DoGC();
+
+                return null;
             }
 
-            return plugins;
+            _pluginAssemblies.Add(pluginAssembly.Id, pluginAssembly);
+            return pluginAssembly;
         }
 
-        public void RemovePluginAssembly(string path)
+        public void RemovePluginAssembly(Guid id)
         {
             // Disable and remove all plugins in the assembly
-            foreach (var plugin in GetPluginsForAssembly(path))
+            foreach (var plugin in _pluginAssemblies[id].Plugins)
             {
                 if (plugin.IsEnabled)
                 {
@@ -100,7 +120,7 @@ namespace DynamicPluginPlugin
             }
 
             // Remove the assembly
-            _contexts.Remove(path);
+            _pluginAssemblies.Remove(id);
         }
 
         public void EnablePlugin(Guid id)
@@ -121,15 +141,15 @@ namespace DynamicPluginPlugin
             }
 
             // If all plugins in the assembly are disabled, load the assembly
-            if (_contexts[plugin.Path] == null)
+            var pluginAssembly = _pluginAssemblies[plugin.AssemblyId];
+            if (!pluginAssembly.IsLoaded)
             {
-                _contexts[plugin.Path] = LoadPluginAssembly(plugin.Path);
+                pluginAssembly.Load();
             }
 
             // Instantiate the plugin
-            var type = Type.GetType(plugin.Type, (assemblyName) => _contexts[plugin.Path].LoadFromAssemblyName(assemblyName), null, true);
-            plugin.Instance = (IPlugin)Activator.CreateInstance(type);
-            StartPlugin(plugin);
+            var type = Type.GetType(plugin.Type, (assemblyName) => pluginAssembly.LoadContext.LoadFromAssemblyName(assemblyName), null, true);
+            plugin.Start((IPlugin)Activator.CreateInstance(type));
         }
 
         public void DisablePlugin(Guid id)
@@ -150,42 +170,25 @@ namespace DynamicPluginPlugin
             }
 
             // Destroy the plugin
-            StopPlugin(plugin);
-            plugin.Instance = null;
+            plugin.Stop();
 
             // If all plugins in the assembly are disabled, unload the assembly
-            if (GetPluginsForAssembly(plugin.Path).All(p => !p.IsEnabled))
+            var pluginAssembly = _pluginAssemblies[plugin.AssemblyId];
+            if (pluginAssembly.Plugins.All(p => !p.IsEnabled))
             {
-                UnloadPluginAssembly(plugin.Path);
+                pluginAssembly.Unload();
+                DoGC();
             }
         }
 
-        public IEnumerable<Plugin> GetPluginsForAssembly(string path)
+        private void DoGC()
         {
-            return _plugins.Values.Where(p => p.Path == path);
-        }
+            if (!ForceGC)
+            {
+                return;
+            }
 
-        private static void StartPlugin(Plugin plugin)
-        {
-            plugin.Instance.StartUp();
-        }
-
-        private static void StopPlugin(Plugin plugin)
-        {
-            plugin.Instance.ShutDown(PluginShutDownReason.UserDisabled);
-        }
-
-        private void UnloadPluginAssembly(string path)
-        {
-            _contexts[path].Unload();
-            _contexts[path] = null;
-        }
-
-        private static AssemblyLoadContext LoadPluginAssembly(string path)
-        {
-            var context = new AssemblyLoadContext(Path.GetFileName(path), true);
-            context.LoadFromAssemblyPath(path);
-            return context;
+            GC.Collect();
         }
     }
 }

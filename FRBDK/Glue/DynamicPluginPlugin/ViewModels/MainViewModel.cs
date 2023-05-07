@@ -58,19 +58,18 @@ namespace DynamicPluginPlugin.ViewModels
 
             try
             {
-                var plugins = _main.AddPluginAssembly(ofd.FileName);
-                if (plugins.Any())
-                {
-                    foreach (var plugin in plugins)
-                    {
-                        var viewModel = new PluginViewModel(plugin);
-                        viewModel.PropertyChanged += Plugin_PropertyChanged;
-                        Plugins.Add(viewModel);
-                    }
-                }
-                else
+                var pluginAssembly = _main.AddPluginAssembly(ofd.FileName);
+                if (pluginAssembly == null)
                 {
                     MessageBox.Show("No plugins found in assembly.", "Dynamic Plugins");
+                    return;
+                }
+
+                foreach (var plugin in pluginAssembly.Plugins)
+                {
+                    var viewModel = new PluginViewModel(plugin);
+                    viewModel.PropertyChanged += Plugin_PropertyChanged;
+                    Plugins.Add(viewModel);
                 }
             }
             catch (Exception ex)
@@ -91,7 +90,7 @@ namespace DynamicPluginPlugin.ViewModels
 
             try
             {
-                _main.RemovePluginAssembly(SelectedPlugin.Path);
+                _main.RemovePluginAssembly(SelectedPlugin.AssemblyId);
                 foreach (var viewModel in viewModels)
                 {
                     viewModel.PropertyChanged -= Plugin_PropertyChanged;

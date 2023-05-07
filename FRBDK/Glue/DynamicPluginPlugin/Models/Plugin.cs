@@ -10,8 +10,21 @@ namespace DynamicPluginPlugin.Models
         public string Path { get; init; }
         public string Version { get; init; }
         public string Type { get; init; }
-        public IPlugin Instance { get; set; }
 
+        public Guid AssemblyId { get; init; }
+        public IPlugin Instance { get; private set; }
         public bool IsEnabled { get => Instance != null; }
+
+        public void Start(IPlugin instance)
+        {
+            Instance = instance;
+            Instance.StartUp();
+        }
+
+        public void Stop()
+        {
+            Instance.ShutDown(PluginShutDownReason.UserDisabled);
+            Instance = null;
+        }
     }
 }
