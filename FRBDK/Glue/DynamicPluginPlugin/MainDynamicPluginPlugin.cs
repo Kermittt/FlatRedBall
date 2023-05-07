@@ -17,7 +17,7 @@ namespace DynamicPluginPlugin
     public class MainDynamicPluginPlugin : PluginBase
     {
         private readonly Dictionary<string, AssemblyLoadContext> _contexts = new();
-        private readonly Dictionary<string, Plugin> _plugins = new();
+        private readonly Dictionary<Guid, Plugin> _plugins = new();
 
         private PluginTab _tab;
         private MainViewModel _viewModel;
@@ -61,13 +61,14 @@ namespace DynamicPluginPlugin
                     var instance = (IPlugin)Activator.CreateInstance(t);
                     var plugin = new Plugin()
                     {
+                        Id = t.GUID,
                         Name = instance.FriendlyName,
                         Version = instance.Version.ToString(),
                         Path = path,
                         Type = t.UnversionedName(),
                         Instance = instance
                     };
-                    _plugins.Add(plugin.Type, plugin);
+                    _plugins.Add(plugin.Id, plugin);
                     StartPlugin(plugin);
                     return plugin;
                 })
@@ -95,18 +96,18 @@ namespace DynamicPluginPlugin
                 {
                     DisablePlugin(plugin);
                 }
-                _plugins.Remove(plugin.Type);
+                _plugins.Remove(plugin.Id);
             }
 
             // Remove the assembly
             _contexts.Remove(path);
         }
 
-        public void EnablePlugin(string type)
+        public void EnablePlugin(Guid id)
         {
-            if (!_plugins.TryGetValue(type, out var plugin))
+            if (!_plugins.TryGetValue(id, out var plugin))
             {
-                throw new Exception($"Cannot find a plugin of type {type}");
+                throw new Exception($"Cannot find a plugin with id {id}");
             }
 
             EnablePlugin(plugin);
@@ -116,7 +117,7 @@ namespace DynamicPluginPlugin
         {
             if (plugin.IsEnabled)
             {
-                throw new Exception($"Plugin is already enabled for type {plugin.Type}");
+                throw new Exception($"Plugin is already enabled for id {plugin.Id}");
             }
 
             // If all plugins in the assembly are disabled, load the assembly
@@ -131,11 +132,11 @@ namespace DynamicPluginPlugin
             StartPlugin(plugin);
         }
 
-        public void DisablePlugin(string type)
+        public void DisablePlugin(Guid id)
         {
-            if (!_plugins.TryGetValue(type, out var plugin))
+            if (!_plugins.TryGetValue(id, out var plugin))
             {
-                throw new Exception($"Cannot find a plugin of type {type}");
+                throw new Exception($"Cannot find a plugin with id {id}");
             }
 
             DisablePlugin(plugin);
@@ -145,7 +146,7 @@ namespace DynamicPluginPlugin
         {
             if (!plugin.IsEnabled)
             {
-                throw new Exception($"Plugin is already disabled for type {plugin.Type}");
+                throw new Exception($"Plugin is already disabled with id {plugin.Id}");
             }
 
             // Destroy the plugin

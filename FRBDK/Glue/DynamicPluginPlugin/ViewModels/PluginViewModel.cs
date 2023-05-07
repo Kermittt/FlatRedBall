@@ -1,5 +1,6 @@
 ﻿using DynamicPluginPlugin.Models;
 using FlatRedBall.Glue.MVVM;
+using System;
 
 namespace DynamicPluginPlugin.ViewModels
 {
@@ -11,11 +12,18 @@ namespace DynamicPluginPlugin.ViewModels
 
         public PluginViewModel(Plugin model)
         {
+            Id = model.Id;
             Name = model.Name;
             Version = model.Version;
             Path = model.Path;
             Type = model.Type;
             IsEnabled = model.Instance != null;
+        }
+
+        public Guid Id
+        {
+            get => Get<Guid>();
+            init => Set(value);
         }
 
         public string Name

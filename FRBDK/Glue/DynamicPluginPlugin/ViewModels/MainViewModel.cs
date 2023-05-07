@@ -1,12 +1,10 @@
 ﻿using FlatRedBall.Glue.MVVM;
-using FlatRedBall.Math.Paths;
 using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Input;
 
 namespace DynamicPluginPlugin.ViewModels
 {
@@ -120,11 +118,11 @@ namespace DynamicPluginPlugin.ViewModels
                     var viewModel = (PluginViewModel)sender;
                     if (viewModel.IsEnabled)
                     {
-                        _main.EnablePlugin(viewModel.Type);
+                        _main.EnablePlugin(viewModel.Id);
                     }
                     else
                     {
-                        _main.DisablePlugin(viewModel.Type);
+                        _main.DisablePlugin(viewModel.Id);
                     }
                 }
                 catch (Exception ex)
