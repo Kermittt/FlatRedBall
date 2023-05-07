@@ -1,4 +1,5 @@
 ﻿using FlatRedBall.Glue.MVVM;
+using FlatRedBall.Math.Paths;
 using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
@@ -27,14 +28,21 @@ namespace DynamicPluginPlugin.ViewModels
             RemoveCommand = new CommandBase(RemoveExecute, RemoveCanExecute);
         }
 
-        public ICommand AddCommand { get; }
-        public ICommand RemoveCommand { get; }
+        public CommandBase AddCommand { get; }
+        public CommandBase RemoveCommand { get; }
+
         public ObservableCollection<PluginViewModel> Plugins { get; } = new();
 
         public PluginViewModel SelectedPlugin
         {
             get => Get<PluginViewModel>();
-            set => Set(value);
+            set
+            {
+                if (Set(value))
+                {
+                    RemoveCommand.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         private void AddExecute()
@@ -69,13 +77,33 @@ namespace DynamicPluginPlugin.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading plugin assembly.\n\n{ex.Message}", "Dynamic Plugins");
+                MessageBox.Show($"Error adding plugin assembly.\n\n{ex.Message}", "Dynamic Plugins");
             }
         }
 
         private void RemoveExecute()
         {
+            var viewModels = Plugins.Where(p => p.Path == SelectedPlugin.Path).ToArray();
+            if (viewModels.Length > 1
+                && MessageBox.Show($"Remove {viewModels.Length} plugins in assembly {System.IO.Path.GetFileName(SelectedPlugin.Path)}?\n\n({string.Join(", ", viewModels.Select(p => p.Name))})", "Dynamic Plugins", MessageBoxButton.OKCancel)
+                    != MessageBoxResult.OK)
+            {
+                return;
+            }
 
+            try
+            {
+                _main.RemovePluginAssembly(SelectedPlugin.Path);
+                foreach (var viewModel in viewModels)
+                {
+                    viewModel.PropertyChanged -= Plugin_PropertyChanged;
+                    Plugins.Remove(viewModel);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error removing plugin assembly.\n\n{ex.Message}", "Dynamic Plugins");
+            }
         }
 
         private bool RemoveCanExecute()

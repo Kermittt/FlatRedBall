@@ -73,6 +73,7 @@ namespace DynamicPluginPlugin
                 })
                 .ToArray();
 
+            // Add the assembly, or unload it immediately if it didn't contain any plugins
             if (plugins.Length > 0)
             {
                 _contexts.Add(path, context);
@@ -83,6 +84,22 @@ namespace DynamicPluginPlugin
             }
 
             return plugins;
+        }
+
+        public void RemovePluginAssembly(string path)
+        {
+            // Disable and remove all plugins in the assembly
+            foreach (var plugin in GetPluginsForAssembly(path))
+            {
+                if (plugin.IsEnabled)
+                {
+                    DisablePlugin(plugin);
+                }
+                _plugins.Remove(plugin.Type);
+            }
+
+            // Remove the assembly
+            _contexts.Remove(path);
         }
 
         public void EnablePlugin(string type)
@@ -97,7 +114,7 @@ namespace DynamicPluginPlugin
 
         public void EnablePlugin(Plugin plugin)
         {
-            if (plugin.Instance != null)
+            if (plugin.IsEnabled)
             {
                 throw new Exception($"Plugin is already enabled for type {plugin.Type}");
             }
@@ -126,7 +143,7 @@ namespace DynamicPluginPlugin
 
         public void DisablePlugin(Plugin plugin)
         {
-            if (plugin.Instance == null)
+            if (!plugin.IsEnabled)
             {
                 throw new Exception($"Plugin is already disabled for type {plugin.Type}");
             }
@@ -136,7 +153,7 @@ namespace DynamicPluginPlugin
             plugin.Instance = null;
 
             // If all plugins in the assembly are disabled, unload the assembly
-            if (GetPluginsForAssembly(plugin.Path).All(p => p.Instance == null))
+            if (GetPluginsForAssembly(plugin.Path).All(p => !p.IsEnabled))
             {
                 UnloadPluginAssembly(plugin.Path);
             }

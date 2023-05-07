@@ -22,10 +22,9 @@ namespace FlatRedBall.Glue.MVVM
 
         public bool CanExecute(object parameter)
         {
-            if(canExecuteFunc != null)
+            if (canExecuteFunc != null)
             {
                 return canExecuteFunc();
-
             }
             else
             {
@@ -35,10 +34,12 @@ namespace FlatRedBall.Glue.MVVM
 
         public void Execute(object parameter)
         {
-            if(execute != null)
-            {
-                execute();
-            }
+            execute?.Invoke();
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

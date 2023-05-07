@@ -9,5 +9,7 @@ namespace DynamicPluginPlugin.Models
         public string Version { get; init; }
         public string Type { get; init; }
         public IPlugin Instance { get; set; }
+
+        public bool IsEnabled { get => Instance != null; }
     }
 }
