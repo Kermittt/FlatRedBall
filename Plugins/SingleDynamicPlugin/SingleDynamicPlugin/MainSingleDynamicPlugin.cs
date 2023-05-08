@@ -20,7 +20,7 @@ namespace SingleDynamicPlugin
 
         public override bool ShutDown(PluginShutDownReason shutDownReason)
         {
-            _tab.Hide();
+            _tab?.Hide();
 
             return true;
         }

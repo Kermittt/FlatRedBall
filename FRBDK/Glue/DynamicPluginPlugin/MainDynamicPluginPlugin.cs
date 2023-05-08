@@ -92,6 +92,7 @@ namespace DynamicPluginPlugin
                 return null;
             }
 
+            pluginAssembly.Watch();
             _pluginAssemblies.Add(pluginAssembly.Id, pluginAssembly);
             return pluginAssembly;
         }
@@ -110,6 +111,7 @@ namespace DynamicPluginPlugin
             }
 
             // Remove the assembly
+            pluginAssembly.Unwatch();
             _pluginAssemblies.Remove(id);
         }
 

@@ -7,6 +7,7 @@ namespace DynamicPluginPlugin.Models
     {
         public Guid Id { get; init; }
         public string Name { get; init; }
+        // TODO : Path can be removed?  (Stored on Assembly)
         public string Path { get; init; }
         public string Version { get; init; }
         public string Type { get; init; }
